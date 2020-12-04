@@ -37,7 +37,7 @@ parser.add_argument('--std',action='store_true',default=False,help='Run SAdj-HE 
 args = parser.parse_args()
 
 
-def sum_n_vec(n):
+def sum_n_vec(n):                                                                                               ### ? what is this function used for
     out = [int(0)] * n
     for i in range(n):
         out[i] = int(((i + 1) * (i + 2) / 2) - 1)
@@ -50,34 +50,34 @@ def ReadGRMBin(prefix, AllN = False):
     IDFileName = prefix + ".grm.id"
     dt = np.dtype('f4') # Relatedness is stored as a float of size 4 in the binary file
     entry_format = 'f' # N is stored as a float in the binary file
-    entry_size = calcsize(entry_format)
+    entry_size = calcsize(entry_format)                                                                         ### Return the size of the struct 
     ## Read IDs
     ids = pd.read_csv(IDFileName, sep = '\t', header = None)
-    ids_vec = ids.iloc[:,1]
+    ids_vec = ids.iloc[:,1]                                                                                     ### the 2nd col 
     n = len(ids.index)
-    ids_diag = ['NA' for x in range(n)]
-    n_off = int(n * (n - 1) / 2) 
+    ids_diag = ['NA' for x in range(n)]                                                                         ### assign n 'NA's to ids_diag
+    n_off = int(n * (n - 1) / 2)                                                                                ### ?
     ## Read relatedness values
-    grm = np.fromfile(BinFileName, dtype = dt)
+    grm = np.fromfile(BinFileName, dtype = dt)                                                                  ### ? what does dt here means
     ## Read number of markers values
     if AllN:
         N = np.fromfile(NFileName, dtype = dt)
     else:
-        with open(NFileName, mode='rb') as f:
+        with open(NFileName, mode='rb') as f:                                                                   ### read binary
             record = f.read(entry_size)
-            N = unpack(entry_format, record)[0]
+            N = unpack(entry_format, record)[0]                                                                 ### ? unpack()
             N = int(N)
     i = sum_n_vec(n)
-    out = {'diag': grm[i], 'off': np.delete(grm, i),'id': ids,'N':N}
+    out = {'diag': grm[i], 'off': np.delete(grm, i),'id': ids,'N':N}                                            ### ?
     return(out)
 
 def multirange(counts):
     counts = np.asarray(counts)
     # Remove the following line if counts is always strictly positive.
     counts = counts[counts != 0]
-    counts1 = counts[:-1]
-    reset_index = np.cumsum(counts1)
-    incr = np.ones(counts.sum(), dtype=int)
+    counts1 = counts[:-1]                                                                                       ### exclude the last element
+    reset_index = np.cumsum(counts1)                                                                            ### Return the cumulative sum of the elements along a given axis.
+    incr = np.ones(counts.sum(), dtype=int)                                                                     ### Return a new array of given shape and type, filled with ones.
     incr[0] = 0
     incr[reset_index] = 1 - counts1
     # Reuse the incr array for the final result.
@@ -91,14 +91,14 @@ def myformula1(A,y,trA=None,trA2=None):
     if (trA is None) and (trA2 is None):
         trA = np.sum(np.diag(A))
         trA2 = np.sum(np.multiply(A,A))
-    n = A.shape[1]
-    yay = np.dot(std_y.T,np.dot(A,std_y))
+    n = A.shape[1]                                                                                              ### number of col
+    yay = np.dot(std_y.T,np.dot(A,std_y))                                                                       ### dot product of two array
     yty = np.dot(std_y,std_y)
     if (npc==0):
         denominator = trA2 - 2*trA + n
         nominator = n - trA + yay - yty
     else:
-        pc = final_PC
+        pc = final_PC                                                                                           ### ? final_PC
         s = np.diag(np.dot(pc.T,np.dot(A,pc)))
         b = s - 1
         c = np.dot(std_y,pc)**2 - 1
@@ -161,9 +161,9 @@ def myformula2(A,y,trA=None,trA2=None):
     var_ge = 2/denominator
     return h2,np.sqrt(var_ge)
 
-def regout(y):
-    X = cov_selected
-    XTX_inv = np.linalg.inv(np.dot(X.T,X))
+def regout(y):                                                                                             ### to calculate residual
+    X = cov_selected                                                                                       ### cov_selected
+    XTX_inv = np.linalg.inv(np.dot(X.T,X))                                                                 ### Compute the (multiplicative) inverse of a matrix.
     XTY = np.dot(X.T,y)
     beta = np.dot(XTX_inv,XTY)
     res = y - np.dot(X,beta)
@@ -173,7 +173,7 @@ def regout(y):
 npc = args.npc
 outprefix = args.out
 logging.basicConfig(format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s',
-                    level=logging.DEBUG,filename=outprefix+'.log',filemode='a')
+                    level=logging.DEBUG,filename=outprefix+'.log',filemode='a')                            ### ?
 for arg, value in sorted(vars(args).items()):
     logging.info("Argument %s: %r", arg, value)
 
@@ -184,7 +184,7 @@ ids = G['id']
 n_phen_nona = ids.shape[0]
 phenotypes = pd.DataFrame(np.loadtxt(args.pheno))
 phenotypes.index = phenotypes.iloc[:,0].astype("int32")
-intersection_indiv = np.intersect1d(ids.iloc[:,0].astype("int32"), phenotypes.iloc[:,0].astype("int32"))
+intersection_indiv = np.intersect1d(ids.iloc[:,0].astype("int32"), phenotypes.iloc[:,0].astype("int32"))   ### Find the intersection of two arrays.
 final_phen = phenotypes.loc[intersection_indiv]
 
 cov_selected = np.ones(n_phen_nona)
@@ -197,12 +197,12 @@ if (args.covar!="NULL"):
 if (args.PC != "NULL"):
     PCs = pd.DataFrame(np.loadtxt(args.PC))
     PCs.index = PCs.iloc[:,0].astype("int32")
-    if (args.npc == -9):
+    if (args.npc == -9):                                                                                ### ? meaning of npc==9
         npc = PCs.shape[1] - 2
     if (npc != 0):
         final_PC = PCs.loc[intersection_indiv]
         final_PC = final_PC.values[:,2:(2+npc)]
-        cov_selected = np.column_stack((cov_selected,final_PC))
+        cov_selected = np.column_stack((cov_selected,final_PC))                                         ### Stack 1-D arrays as columns into a 2-D array.(similar to cbind)
 
 y = final_phen.values[:,args.mpheno+1]
 res_y = regout(y)
